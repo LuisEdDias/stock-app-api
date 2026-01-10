@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ative o 2FA</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .email-header {
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        .email-header h1 {
+            margin: 0;
+        }
+        .email-body {
+            padding: 20px;
+        }
+        .email-body h2 {
+            color: #4CAF50;
+        }
+        .email-body p {
+            line-height: 1.6;
+        }
+        .email-body img {
+            display: block;
+            margin: 20px auto;
+            max-width: 200px;
+        }
+        .email-footer {
+            background-color: #f4f4f9;
+            text-align: center;
+            padding: 10px;
+            font-size: 12px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+<div class="email-container">
+    <div class="email-header">
+        <h1>Ative a Autenticação de Dois Fatores (2FA)</h1>
+    </div>
+    <div class="email-body">
+        <h2>Olá,</h2>
+        <p>
+            Para garantir a segurança da sua conta, habilitamos a autenticação de dois fatores (2FA).
+            Siga as instruções de configuração abaixo.
+        </p>
+        <p>
+            1. Baixe um aplicativo autenticador como <strong>Google Authenticator</strong>, <strong>Authy</strong>, ou similar.<br>
+            2. Escaneie o QR Code abaixo usando o aplicativo.
+        </p>
+        <img src="{{qrcode_url}}" alt="QR Code para habilitar o 2FA">
+        <p>
+            3. Após escanear, você receberá um código temporário no aplicativo.<br>
+            4. Insira esse código no campo de validação para completar a configuração do 2FA.
+        </p>
+        <p>
+            Se precisar de ajuda, entre em contato com nosso suporte.
+        </p>
+        <p>
+            Atenciosamente, <br>
+            <strong>Equipe StockApp</strong>
+        </p>
+    </div>
+    <div class="email-footer">
+        © 2025 StockApp. Todos os direitos reservados.
+    </div>
+</div>
+</body>
+</html>

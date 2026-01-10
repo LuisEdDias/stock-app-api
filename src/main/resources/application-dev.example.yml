@@ -1,0 +1,58 @@
+spring:
+  application:
+    name: stock-app-main-service
+
+  datasource:
+    # Example: jdbc:postgresql://localhost:5432/stock_db
+    url: jdbc:postgresql://<DB_HOST>:<DB_PORT>/<DB_NAME>
+    username: <POSTGRES_USERNAME>
+    password: <POSTGRES_PASSWORD>
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      # For development purposes only
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+
+  mail:
+    # Optional configuration
+    # Used only if email features are enabled
+    host: smtp.gmail.com
+    port: 587
+    username: <EMAIL_USERNAME>
+    password: <EMAIL_PASSWORD>
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+server:
+  servlet:
+    context-path: /api
+  port: 8080
+
+app:
+  jwt:
+    key:
+      # JWT keys must be provided in PEM format
+      private: <JWT_PRIVATE_KEY>
+      public: <JWT_PUBLIC_KEY>
+
+aws:
+  s3:
+    # Optional – required only if image upload is enabled
+    bucket-name: <AWS_S3_BUCKET>
+    region: <AWS_REGION>
+    access-key: <AWS_ACCESS_KEY>
+    secret-key: <AWS_SECRET_KEY>
+
+logging:
+  level:
+    root: INFO
