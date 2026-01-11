@@ -32,6 +32,7 @@ Traditional role-based models are insufficient for fine-grained access control a
 
 The authorization model will be composed of:
 
+* Roles: High-level identity classification (e.g., ROOT, ADMIN, USER).
 * Groups: Logical collections of permissions.
 * Permissions: Atomic actions enforced by the system.
 
@@ -111,6 +112,52 @@ The ROOT user:
 * Is unique (single instance).
 * Cannot be created, deleted, or modified via API endpoints.
 * Bypasses group and permission checks by design.
+
+### Consequences
+
+* Ensures recoverability after catastrophic database loss.
+* Prevents permanent administrative lockout.
+* Enforces secure operational practices via external secret management.
+* Requires deployment environments to be correctly configured before startup.
+
+This approach balances security, operational resilience, and auditability while maintaining a clear separation between bootstrap authority and regular authorization logic.
+
+---
+
+## ADR-006: Use UUID as External User Identifier
+
+### Context
+
+The system exposes a REST API secured by JWT-based authentication.
+Users are persisted in a relational database and are referenced internally by a database-generated primary key.
+
+As part of the security and architectural refactoring, the application must define how users are identified:
+
+* internally (database, relationships, performance)
+
+* externally (API, JWT tokens, logs, integrations)
+
+In particular, the JWT `sub` (subject) claim must uniquely and safely identify the authenticated user without exposing sensitive or implementation-specific details.
+
+### Decision
+
+The system will use **two distinct identifiers for users**:
+
+1. **Internal Identifier**
+* Type: `Long`
+* Purpose: database primary key, internal relationships, joins, and performance
+* Visibility: **internal only**, never exposed outside the backend
+
+2. **External Identifier**
+* Type: `UUID`
+  * Purpose:
+  * JWT `sub` claim
+  * Public API paths
+  * Logs and audit trails
+  * Future integrations and distributed scenarios
+* Visibility: exposed to clients and external systems
+
+The JWT `sub` claim will contain the user’s **UUID external identifier**, not the database ID.
 
 ### Consequences
 
