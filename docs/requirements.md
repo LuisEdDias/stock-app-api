@@ -42,15 +42,24 @@ The API provides authentication, authorization, and management of stock-related 
 * If no ROOT user exists, the system shall automatically create one.
 * ROOT credentials shall be provided via environment variables.
 * Hardcoded ROOT credentials shall be prohibited.
+* The bootstrap process shall be idempotent.
+* The system shall fail fast if ROOT credentials are not properly configured on first startup.
 
 ## 8. Security Constraints
 
 * Sensitive credentials shall never be committed to source control.
 * The system shall prevent privilege escalation through API misuse.
 * Authorization rules shall be enforced at service or security-filter level.
-
-## 9. Non-Functional Requirements
-
 * The authorization model shall be extensible without breaking existing APIs.
-* The bootstrap process shall be idempotent.
-* The system shall fail fast if ROOT credentials are not properly configured on first startup.
+
+## 9. User Identification Requirements
+
+* The system shall maintain a clear separation between internal and external user identifiers.
+* The system shall assign an internal identifier used exclusively for persistence and relational integrity.
+* The system shall assign an immutable external identifier of type UUID to each user.
+* The external user identifier shall be used in all public-facing contexts, including:
+  * API endpoints
+  * JWT sub (subject) claim
+  * Audit logs and security events
+* The internal database identifier shall never be exposed through the API or included in JWT tokens.
+* The system shall resolve authenticated users using the external identifier provided in the JWT.
