@@ -1,7 +1,6 @@
 package lat.luisdias.stock_app_main_service.auth.entities.user;
 
 import jakarta.persistence.*;
-import lat.luisdias.stock_app_main_service.auth.dto.admin.StoreRootUserDTO;
 import lat.luisdias.stock_app_main_service.auth.dto.user.StoreUserDTO;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -11,6 +10,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 @Entity
 @Table(name = "users")
@@ -18,12 +18,10 @@ public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
+    @Column(nullable = false, unique = true, updatable = false)
+    private UUID publicId;
     @Column(unique = true, nullable = false)
     private String email;
-    @Column(unique = true, nullable = false)
-    private String nickname;
-    @Column(nullable = false)
     private String password;
     @Column(nullable = false)
     private UserRoles role;
@@ -33,17 +31,10 @@ public class User implements UserDetails {
 
 
     public User(StoreUserDTO userDTO) {
+        this.publicId = UUID.randomUUID();
         this.email = userDTO.email();
-        this.nickname = userDTO.username();
         this.password = new BCryptPasswordEncoder().encode(userDTO.password());
         this.role = userDTO.role();
-    }
-
-    public User(StoreRootUserDTO rootUserDTO) {
-        this.email = rootUserDTO.email();
-        this.nickname = rootUserDTO.username();
-        this.password = new BCryptPasswordEncoder().encode(rootUserDTO.password());
-        this.role = UserRoles.ROOT;
     }
 
     protected User() {}
@@ -59,6 +50,14 @@ public class User implements UserDetails {
     public void enableTwoFAuth(String twoFASecret) {
         this.twoFASecret = twoFASecret;
         this.twoFAuth = true;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public UUID getPublicId() {
+        return publicId;
     }
 
     public boolean isTwoFAuth() {
@@ -84,10 +83,6 @@ public class User implements UserDetails {
         return email;
     }
 
-    public String getNickname() {
-        return nickname;
-    }
-
     @Override
     public boolean isAccountNonExpired() {
         return UserDetails.super.isAccountNonExpired();
@@ -106,10 +101,6 @@ public class User implements UserDetails {
     @Override
     public boolean isEnabled() {
         return UserDetails.super.isEnabled();
-    }
-
-    public Long getId() {
-        return id;
     }
 
     @Override
