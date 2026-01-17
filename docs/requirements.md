@@ -2,11 +2,11 @@
 
 ## 1. Purpose
 
-This document defines the functional and non-functional requirements of the Stock Management API. It also specifies security and access control requirements, including the bootstrap administrative model based on a ROOT user.
+This document defines the functional and non-functional requirements of the Stock Management API. specifies the Identity and Access Management (IAM) model, the sovereign ROOT bootstrap process, and the stateless authorization engine.
 
 ## 2. Scope
 
-The API provides authentication, authorization, and management of stock-related entities. User access is controlled through roles, groups, and permissions.
+The API provides authentication, authorization, and stock management. Access control is enforced through a hierarchical model of Roles, Groups, and Permissions, optimized for stateless execution and high granularity.
 
 ## 3. Actors
 
@@ -15,17 +15,19 @@ The API provides authentication, authorization, and management of stock-related 
 
 ## 4. Authentication Requirements
 
-* The system shall authenticate users using JWT-based authentication.
-* Tokens shall be validated using a shared secret or asymmetric key.
-* Expired or invalid tokens shall result in access denial.
+* Dual-Token System: The system shall implement a short-lived Access Token (JWT) and a long-lived Refresh Token.
+* Refresh Token Persistence: Refresh tokens shall be persisted to allow for manual revocation and session management.
+* Token Rotation: The system shall implement Refresh Token Rotation, where a new refresh token is issued upon every renewal.
+* Reuse Detection: The system shall detect and block refresh token reuse, invalidating all active sessions for the affected user upon detection.
+* Multi-Factor Authentication (2FA): The system shall support TOTP-based 2FA as a requirement for specific roles or users.
 
 ## 5. Authorization Requirements
 
-* The system shall support role-based access control (RBAC).
-* The system shall support permission-based authorization associated with groups.
-* Users may belong to one or more groups.
-* Groups shall aggregate permissions.
-* Permissions shall represent fine-grained actions (e.g., `ITEM_READ`, `ITEM_CREATE`).
+* Deny-by-Default: The system shall deny access to any protected resource if no explicit permission is granted.
+* Hierarchical Permissions: Permissions shall follow the DOMAIN:ACTION naming convention.
+* Structured JWT Claims: Permissions shall be stored in the JWT as a Nested Map (Map<String, List<String>>) to reduce token size and improve organization.
+* Wildcard Support: The system shall support the wildcard character (*) at the action level. A DOMAIN:* permission shall grant access to all actions within that specific domain.
+* Inheritance: Users shall inherit permissions cumulatively from all groups to which they are assigned.
 
 ## 6. ROOT User Requirements
 
@@ -40,17 +42,20 @@ The API provides authentication, authorization, and management of stock-related 
 
 * On application startup, the system shall verify whether a ROOT user exists.
 * If no ROOT user exists, the system shall automatically create one.
-* ROOT credentials shall be provided via environment variables.
+* ROOT credentials shall be provided exclusively via environment variables.
 * Hardcoded ROOT credentials shall be prohibited.
 * The bootstrap process shall be idempotent.
-* The system shall fail fast if ROOT credentials are not properly configured on first startup.
+* The system shall fail to start if ROOT credentials are not properly configured on first startup.
 
-## 8. Security Constraints
+## 8. Security & Resilience
 
 * Sensitive credentials shall never be committed to source control.
 * The system shall prevent privilege escalation through API misuse.
 * Authorization rules shall be enforced at service or security-filter level.
 * The authorization model shall be extensible without breaking existing APIs.
+* The authentication endpoints shall implement Rate Limiting (Token Bucket algorithm) per IP address to prevent brute-force attacks.
+* The authorization engine shall rely solely on JWT claims for permission checks, avoiding database lookups during the request lifecycle.
+* The system accepts a maximum 15-minute window (Access Token TTL) for permission changes to propagate without forced revocation.
 
 ## 9. User Identification Requirements
 
@@ -63,3 +68,4 @@ The API provides authentication, authorization, and management of stock-related 
   * Audit logs and security events
 * The internal database identifier shall never be exposed through the API or included in JWT tokens.
 * The system shall resolve authenticated users using the external identifier provided in the JWT.
+* Logs and error messages shall mask sensitive data (e.g., partial email masking).
