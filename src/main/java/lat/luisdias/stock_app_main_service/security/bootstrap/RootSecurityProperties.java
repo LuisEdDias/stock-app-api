@@ -1,4 +1,4 @@
-package lat.luisdias.stock_app_main_service.application.bootstrap;
+package lat.luisdias.stock_app_main_service.security.bootstrap;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

@@ -1,7 +1,5 @@
-package lat.luisdias.stock_app_main_service.security.services.auth;
+package lat.luisdias.stock_app_main_service.security.authentication.log;
 
-import lat.luisdias.stock_app_main_service.security.entities.logs.AuthLog;
-import lat.luisdias.stock_app_main_service.security.repositories.auth.AuthLogRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

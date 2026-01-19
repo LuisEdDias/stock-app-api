@@ -1,7 +1,7 @@
-package lat.luisdias.stock_app_main_service.security.entities.vo;
+package lat.luisdias.stock_app_main_service.security.authentication.log;
 
 import jakarta.persistence.Embeddable;
-import lat.luisdias.stock_app_main_service.security.infra.util.GeoLocationService.GeoLocationDTO;
+import lat.luisdias.stock_app_main_service.security.authentication.log.GeoLocationService.GeoLocationDTO;
 
 @Embeddable
 public class GeoLocationVO {

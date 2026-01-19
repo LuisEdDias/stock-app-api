@@ -1,6 +1,5 @@
-package lat.luisdias.stock_app_main_service.security.infra.util;
+package lat.luisdias.stock_app_main_service.security.authentication.log;
 
-import lat.luisdias.stock_app_main_service.security.entities.vo.GeoLocationVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;

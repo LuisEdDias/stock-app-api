@@ -1,4 +1,4 @@
-package lat.luisdias.stock_app_main_service.security.entities.user;
+package lat.luisdias.stock_app_main_service.security.authorization;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import lat.luisdias.stock_app_main_service.stock.infra.util.I18n;

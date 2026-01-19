@@ -1,4 +1,4 @@
-package lat.luisdias.stock_app_main_service.security.dto.auth;
+package lat.luisdias.stock_app_main_service.security.authentication.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

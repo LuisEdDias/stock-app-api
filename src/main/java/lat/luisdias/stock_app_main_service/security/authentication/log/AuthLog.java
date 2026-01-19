@@ -1,7 +1,6 @@
-package lat.luisdias.stock_app_main_service.security.entities.logs;
+package lat.luisdias.stock_app_main_service.security.authentication.log;
 
 import jakarta.persistence.*;
-import lat.luisdias.stock_app_main_service.security.entities.vo.GeoLocationVO;
 
 import java.sql.Timestamp;
 import java.time.Instant;

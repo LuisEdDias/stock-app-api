@@ -7,7 +7,7 @@ import javax.crypto.spec.SecretKeySpec;
 import java.util.Arrays;
 import java.util.Base64;
 
-public class CryptoUtil {
+public class TwoFactorCodeEncoder {
     @Value("${app.security.two-factor-auth.key}")
     private static String SECRET_KEY;
 

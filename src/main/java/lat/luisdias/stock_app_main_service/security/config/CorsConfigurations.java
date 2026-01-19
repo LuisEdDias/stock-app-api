@@ -1,4 +1,4 @@
-package lat.luisdias.stock_app_main_service.security.infra.security;
+package lat.luisdias.stock_app_main_service.security.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

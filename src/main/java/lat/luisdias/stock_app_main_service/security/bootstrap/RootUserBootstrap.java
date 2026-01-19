@@ -1,8 +1,8 @@
-package lat.luisdias.stock_app_main_service.application.bootstrap;
+package lat.luisdias.stock_app_main_service.security.bootstrap;
 
-import lat.luisdias.stock_app_main_service.security.entities.user.User;
-import lat.luisdias.stock_app_main_service.security.entities.user.UserRole;
-import lat.luisdias.stock_app_main_service.security.repositories.user.UserRepository;
+import lat.luisdias.stock_app_main_service.security.identity.User;
+import lat.luisdias.stock_app_main_service.security.authorization.UserRole;
+import lat.luisdias.stock_app_main_service.security.identity.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;

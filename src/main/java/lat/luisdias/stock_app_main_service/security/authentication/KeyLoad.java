@@ -15,7 +15,7 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 
 @Component
-public class KeyUtil {
+public class KeyLoad {
     private final Logger logger;
     @Value("${app.security.jwt.key.private}")
     private String privateKey;
@@ -23,8 +23,8 @@ public class KeyUtil {
     @Value("${app.security.jwt.key.public}")
     private String publicKey;
 
-    public KeyUtil() {
-        this.logger = LoggerFactory.getLogger(KeyUtil.class);
+    public KeyLoad() {
+        this.logger = LoggerFactory.getLogger(KeyLoad.class);
     }
 
     public RSAPrivateKey loadPrivateKey() throws RuntimeException {

@@ -1,11 +1,12 @@
-package lat.luisdias.stock_app_main_service.security.authentication.two.factorauth;
+package lat.luisdias.stock_app_main_service.security.authentication.two.factor.auth;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lat.luisdias.stock_app_main_service.security.authentication.KeyUtil;
+import lat.luisdias.stock_app_main_service.security.authentication.KeyLoad;
 import lat.luisdias.stock_app_main_service.stock.infra.util.I18n;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -18,17 +19,18 @@ import java.io.IOException;
 import java.security.interfaces.RSAPublicKey;
 import java.util.List;
 
+@Profile("!test")
 @Component
-public class TwoFAFilter extends OncePerRequestFilter {
-    private final KeyUtil keyUtil;
+public class TwoFactorAuthFilter extends OncePerRequestFilter {
+    private final KeyLoad keyLoad;
     private static final List<String> ALLOWED_PATHS = List.of(
             "/login/validate-2fa"
     );
 
-    public TwoFAFilter(
-            final KeyUtil keyUtil
+    public TwoFactorAuthFilter(
+            final KeyLoad keyLoad
     ) {
-        this.keyUtil = keyUtil;
+        this.keyLoad = keyLoad;
     }
 
     @Override
@@ -64,7 +66,7 @@ public class TwoFAFilter extends OncePerRequestFilter {
     }
 
     private JwtDecoder getJwtDecoder() {
-        RSAPublicKey publicKey = keyUtil.loadPublicKey();
+        RSAPublicKey publicKey = keyLoad.loadPublicKey();
         return NimbusJwtDecoder.withPublicKey(publicKey).build();
     }
 }
