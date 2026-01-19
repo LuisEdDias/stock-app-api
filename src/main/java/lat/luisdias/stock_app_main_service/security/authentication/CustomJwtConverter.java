@@ -8,23 +8,31 @@ import org.springframework.security.oauth2.jwt.BadJwtException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Component
 public class CustomJwtConverter implements Converter<Jwt, UsernamePasswordAuthenticationToken> {
 
     @Override
     public UsernamePasswordAuthenticationToken convert(Jwt jwt) {
-        UUID publicId = UUID.fromString(jwt.getSubject());
+        UUID publicId;
+
+        try {
+            publicId = UUID.fromString(jwt.getSubject());
+        } catch (IllegalArgumentException e) {
+            throw new BadJwtException("Invalid subject UUID", e);
+        }
+
         String nickname = jwt.getClaimAsString("nickname");
         String role = jwt.getClaimAsString("role");
-        List<String> permissions = jwt.getClaimAsStringList("permissions");
+        Map<String, List<String>> permissions = jwt.getClaim("perm");
 
         if (role == null) {
             throw new BadJwtException("Missing role claim");
+        }
+
+        if (nickname == null) {
+            throw new BadJwtException("Missing nickname claim");
         }
 
         AuthenticatedUser authenticatedUser = new AuthenticatedUser(publicId, nickname, role);
@@ -38,15 +46,21 @@ public class CustomJwtConverter implements Converter<Jwt, UsernamePasswordAuthen
         );
     }
 
-    private Collection<GrantedAuthority> extractAuthorities(String role, List<String> permissions) {
+    private Collection<GrantedAuthority> extractAuthorities(String role, Map<String, List<String>> permissions) {
         List<GrantedAuthority> authorities = new ArrayList<>();
 
         authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
 
         if (permissions != null) {
-            for (String permission : permissions) {
-                authorities.add(new SimpleGrantedAuthority(permission));
-            }
+            permissions.forEach((domain, actions) -> {
+                if (actions.contains("*")) {
+                    authorities.add(new SimpleGrantedAuthority(domain + ":*"));
+                } else {
+                    actions.forEach(action -> {
+                        authorities.add(new SimpleGrantedAuthority(domain + ":" + action));
+                    });
+                }
+            });
         }
 
         return authorities;
