@@ -1,13 +1,13 @@
-package lat.luisdias.stock_app_main_service.security.infra.security;
+package lat.luisdias.stock_app_main_service.security.config;
 
-import lat.luisdias.stock_app_main_service.security.entities.user.UserRole;
-import lat.luisdias.stock_app_main_service.security.infra.util.KeyUtil;
+import lat.luisdias.stock_app_main_service.security.authentication.CustomJwtConverter;
+import lat.luisdias.stock_app_main_service.security.authentication.two.factor.auth.TwoFactorAuthFilter;
+import lat.luisdias.stock_app_main_service.security.authentication.KeyLoad;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -24,16 +24,19 @@ import java.security.interfaces.RSAPublicKey;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity(securedEnabled = true)
 public class SecurityConfigurations {
-    private final CustomJwtConverter authoritiesConverter;
-    private final KeyUtil keyUtil;
-    private final TwoFAFilter twoFAFilter;
+    private final CustomJwtConverter customJwtConverter;
+    private final KeyLoad keyLoad;
+    private final TwoFactorAuthFilter twoFactorAuthFilter;
 
-    public SecurityConfigurations(final CustomJwtConverter authoritiesConverter, final KeyUtil keyUtil, final TwoFAFilter twoFAFilter) {
-        this.authoritiesConverter = authoritiesConverter;
-        this.keyUtil = keyUtil;
-        this.twoFAFilter = twoFAFilter;
+    public SecurityConfigurations(
+            final CustomJwtConverter customJwtConverter,
+            final KeyLoad keyLoad,
+            final TwoFactorAuthFilter twoFactorAuthFilter
+    ) {
+        this.customJwtConverter = customJwtConverter;
+        this.keyLoad = keyLoad;
+        this.twoFactorAuthFilter = twoFactorAuthFilter;
     }
 
     @Bean
@@ -43,23 +46,17 @@ public class SecurityConfigurations {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(this::configureAuthorization)
                 .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(jwt -> jwt.jwtAuthenticationConverter(authoritiesConverter))
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(customJwtConverter))
                 )
-                .addFilterBefore(twoFAFilter, BearerTokenAuthenticationFilter.class)
+                .addFilterBefore(twoFactorAuthFilter, BearerTokenAuthenticationFilter.class)
                 .build();
     }
 
-    private void configureAuthorization(AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry auth) {
+    private void configureAuthorization(
+            AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry auth
+    ) {
         auth.requestMatchers(HttpMethod.POST, "/v1/login").permitAll();
-        auth.requestMatchers(HttpMethod.POST, "/v1/user/create-root").permitAll();
-        auth.requestMatchers(HttpMethod.GET, "/v1/item-category/**").authenticated();
-        auth.requestMatchers(HttpMethod.GET, "/v1/item-model/**").authenticated();
-        auth.requestMatchers(HttpMethod.GET, "/v1/inventory/**").authenticated();
-        auth.requestMatchers(HttpMethod.POST, "/v1/inventory/*/check").authenticated();
-        auth.requestMatchers("/v1/user/**").authenticated();
-        auth.requestMatchers("/v1/item/**").authenticated();
-        auth.requestMatchers("/v1/box/**").authenticated();
-        auth.anyRequest().hasAnyAuthority(UserRole.ROOT.toString(), UserRole.ADMIN.toString());
+        auth.anyRequest().authenticated();
     }
 
     @Bean
@@ -74,7 +71,7 @@ public class SecurityConfigurations {
 
     @Bean
     public JwtDecoder jwtDecoder() {
-        RSAPublicKey publicKey = keyUtil.loadPublicKey();
+        RSAPublicKey publicKey = keyLoad.loadPublicKey();
         return NimbusJwtDecoder.withPublicKey(publicKey).build();
     }
 }
