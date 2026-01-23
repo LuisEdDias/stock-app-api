@@ -1,10 +1,10 @@
-package lat.luisdias.stock_app_main_service.security.dto.user;
+package lat.luisdias.stock_app_main_service.security.identity.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
-import lat.luisdias.stock_app_main_service.security.entities.user.UserRole;
+import lat.luisdias.stock_app_main_service.security.authorization.UserRole;
 
 public record StoreUserDTO(
         @NotBlank(message = "{validation.not_blank}")

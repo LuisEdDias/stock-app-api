@@ -1,4 +1,4 @@
-package lat.luisdias.stock_app_main_service.security.authorization.entities;
+package lat.luisdias.stock_app_main_service.security.authorization.permission;
 
 import jakarta.persistence.*;
 
@@ -55,6 +55,6 @@ public class Permission {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(code);
+        return 31;
     }
 }

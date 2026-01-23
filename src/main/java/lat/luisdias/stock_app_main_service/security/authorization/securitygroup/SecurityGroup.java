@@ -1,6 +1,7 @@
-package lat.luisdias.stock_app_main_service.security.authorization.entities;
+package lat.luisdias.stock_app_main_service.security.authorization.securitygroup;
 
 import jakarta.persistence.*;
+import lat.luisdias.stock_app_main_service.security.authorization.permission.Permission;
 
 import java.util.HashSet;
 import java.util.Objects;
@@ -80,6 +81,6 @@ public class SecurityGroup {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(name);
+        return 31;
     }
 }

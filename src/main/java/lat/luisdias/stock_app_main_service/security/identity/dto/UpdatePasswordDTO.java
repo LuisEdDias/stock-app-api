@@ -1,9 +1,13 @@
-package lat.luisdias.stock_app_main_service.security.dto.user;
+package lat.luisdias.stock_app_main_service.security.identity.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 
+import java.util.UUID;
+
 public record UpdatePasswordDTO(
+        @NotBlank
+        UUID subject,
         @NotBlank(message = "{validation.not_blank}")
         String oldPassword,
         @NotBlank(message = "{validation.not_blank}")

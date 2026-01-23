@@ -1,134 +1,214 @@
-package lat.luisdias.stock_app_main_service.security.identity.entities;
+package lat.luisdias.stock_app_main_service.security.identity;
 
 import jakarta.persistence.*;
-import lat.luisdias.stock_app_main_service.security.entities.user.UserRole;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
+import lat.luisdias.stock_app_main_service.security.authorization.UserRole;
+import lat.luisdias.stock_app_main_service.security.authorization.securitygroup.SecurityGroup;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.*;
 
 @Entity
 @Table(name = "users")
-public class User implements UserDetails {
+public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     @Column(nullable = false, unique = true, updatable = false)
-    private UUID publicId;
-    @Column(unique = true, nullable = false)
+    private UUID subject;
+
+    @Column(nullable = false, unique = true)
     private String email;
-    private String password;
+
+    @Column(nullable = false)
+    private String passwordHash;
+
+    @Column(nullable = false)
+    private Instant passwordExpiryDate;
+
     @Column(nullable = false, unique = true, updatable = false)
     private String nickname;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserRole role;
+
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private boolean twoFAuth = false;
-    private String twoFASecret;
+    private AccountStatus accountStatus;
+
+    @Column(nullable = false)
+    private boolean twoFactorEnabled = false;
+
+    private String twoFactorSecret;
+
+    @Column(nullable = false)
+    private Instant createdAt;
+
+    private Instant lastLogin;
+
+    @Column(nullable = false)
+    private int failedLoginAttempts = 0;
+
+    private Instant lockedUntil;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "user_security_group",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "group_id")
+    )
+    private Set<SecurityGroup> securityGroups = new HashSet<>();
 
     protected User() {}
 
     public User(
-            UUID publicId,
+            UUID subject,
             String email,
-            String password,
+            String passwordHash,
             String nickname,
-            UserRole role
+            UserRole role,
+            AccountStatus accountStatus
     ) {
-        this.publicId = publicId;
-        this.email = email;
-        this.password = password;
-        this.nickname = nickname;
-        this.role = role;
+        this.subject = Objects.requireNonNull(subject);
+        this.email = Objects.requireNonNull(email);
+        this.passwordHash = Objects.requireNonNull(passwordHash);
+        this.nickname = Objects.requireNonNull(nickname);
+        this.role = Objects.requireNonNull(role);
+        this.accountStatus = Objects.requireNonNull(accountStatus);
     }
 
-    public void updatePassword(String password) {
-        this.password = password;
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = Instant.now();
+        this.passwordExpiryDate = this.createdAt;
     }
 
-    public void updateEmail(String email) {
-        this.email = email;
+    public void changePassword(String newPasswordHash, Duration passwordExpiryDuration) {
+        this.passwordHash = Objects.requireNonNull(newPasswordHash);
+        this.passwordExpiryDate = Instant.now().plus(passwordExpiryDuration);
     }
 
-    public void enableTwoFAuth(String twoFASecret) {
-        this.twoFASecret = twoFASecret;
-        this.twoFAuth = true;
+    public void changeEmail(String email) {
+        this.email = Objects.requireNonNull(email);
+    }
+
+    public void changeAccountStatus(AccountStatus newAccountStatus) {
+        this.accountStatus = Objects.requireNonNull(newAccountStatus);
+    }
+
+    public void enableTwoFactor(String secret) {
+        this.twoFactorSecret = Objects.requireNonNull(secret);
+        this.twoFactorEnabled = true;
+    }
+
+    public void disableTwoFactor() {
+        this.twoFactorSecret = null;
+        this.twoFactorEnabled = false;
+    }
+
+    public void addSecurityGroup(SecurityGroup group) {
+        this.securityGroups.add(group);
+    }
+
+    public void removeSecurityGroup(SecurityGroup group) {
+        this.securityGroups.remove(group);
+    }
+
+    public void removeAllSecurityGroups() {
+        new HashSet<>(securityGroups)
+                .forEach(this::removeSecurityGroup);
+    }
+
+    public void setLastLogin() {
+        this.lastLogin = Instant.now();
+        this.failedLoginAttempts = 0;
+        this.lockedUntil = null;
+    }
+
+    public void setFailedLoginAttempts(int maxAttempts, Duration lockDuration) {
+        this.failedLoginAttempts++;
+
+        if (failedLoginAttempts >= maxAttempts) {
+            this.lockedUntil = Instant.now().plus(lockDuration);
+            this.failedLoginAttempts = 0;
+        }
     }
 
     public Long getId() {
         return id;
     }
 
-    public UUID getPublicId() {
-        return publicId;
+    public UUID getSubject() {
+        return subject;
     }
 
-    public boolean isTwoFAuth() {
-        return twoFAuth;
+    public String getEmail() {
+        return email;
     }
 
-    public String getTwoFASecret() {
-        return twoFASecret;
+    public String getPasswordHash() {
+        return passwordHash;
     }
 
-    public UserRole getRole() {
-        return role;
+    public Instant getPasswordExpiryDate() {
+        return passwordExpiryDate;
     }
 
     public String getNickname() {
         return nickname;
     }
 
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(role.name()));
+    public UserRole getRole() {
+        return role;
     }
 
-    @Override
-    public String getPassword() {
-        return password;
+    public boolean isActive() {
+        return accountStatus.equals(AccountStatus.ACTIVE);
     }
 
-    @Override
-    public String getUsername() {
-        return email;
+    public boolean isLocked() {
+        return lockedUntil != null && lockedUntil.isAfter(Instant.now());
     }
 
-    @Override
-    public boolean isAccountNonExpired() {
-        return UserDetails.super.isAccountNonExpired();
+    public Instant getLockedUntil() {
+        return lockedUntil;
     }
 
-    @Override
-    public boolean isAccountNonLocked() {
-        return UserDetails.super.isAccountNonLocked();
+    public boolean isTwoFactorEnabled() {
+        return twoFactorEnabled;
     }
 
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return UserDetails.super.isCredentialsNonExpired();
+    public String getTwoFactorSecret() {
+        return twoFactorSecret;
     }
 
-    @Override
-    public boolean isEnabled() {
-        return UserDetails.super.isEnabled();
+    public Set<SecurityGroup> getSecurityGroups() {
+        return Collections.unmodifiableSet(securityGroups);
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public AccountStatus getAccountStatus() {
+        return accountStatus;
+    }
+
+    public Instant getLastLogin() {
+        return lastLogin;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        User user = (User) o;
-        return Objects.equals(id, user.id);
+        if (!(o instanceof User other)) return false;
+        return subject != null && subject.equals(other.subject);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(id);
+        return Objects.hashCode(subject);
     }
 }

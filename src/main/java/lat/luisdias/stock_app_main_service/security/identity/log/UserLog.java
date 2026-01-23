@@ -1,9 +1,10 @@
-package lat.luisdias.stock_app_main_service.security.entities.logs;
+package lat.luisdias.stock_app_main_service.security.identity.log;
 
 import jakarta.persistence.*;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.UUID;
 
 @Entity
 @Table(name = "user_log")
@@ -12,13 +13,13 @@ public class UserLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @Column(name = "user_id")
-    private Long userId;
+    private UUID userId;
     @Column(name = "user_nickname")
     private String userNickname;
     @Column(name = "action")
     private String action;
     @Column(name = "user_target_id")
-    private Long userTargetId;
+    private UUID userTargetId;
     @Temporal(TemporalType.TIMESTAMP)
     private Timestamp timestamp;
 
@@ -32,15 +33,14 @@ public class UserLog {
         this.timestamp = builder.timestamp;
     }
 
-
     public static class Builder {
-        private Long userId;
+        private UUID userId;
         private String userNickname;
         private String action;
-        private Long userTargetId;
+        private UUID userTargetId;
         private final Timestamp timestamp = new Timestamp(Instant.now().toEpochMilli());
 
-        public Builder setUserId(Long userId) {
+        public Builder setUserId(UUID userId) {
             this.userId = userId;
             return this;
         }
@@ -55,7 +55,7 @@ public class UserLog {
             return this;
         }
 
-        public Builder setUserTargetId(Long userTargetId) {
+        public Builder setUserTargetId(UUID userTargetId) {
             this.userTargetId = userTargetId;
             return this;
         }
@@ -69,7 +69,7 @@ public class UserLog {
         return id;
     }
 
-    public Long getUserId() {
+    public UUID getUserId() {
         return userId;
     }
 
@@ -77,7 +77,7 @@ public class UserLog {
         return userNickname;
     }
 
-    public Long getUserTargetId() {
+    public UUID getUserTargetId() {
         return userTargetId;
     }
 

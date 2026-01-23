@@ -1,25 +1,30 @@
-package lat.luisdias.stock_app_main_service.security.dto.user;
+package lat.luisdias.stock_app_main_service.security.identity.dto;
 
-import lat.luisdias.stock_app_main_service.security.identity.entities.User;
+import lat.luisdias.stock_app_main_service.security.authorization.securitygroup.dto.GetSecurityGroupDTO;
+import lat.luisdias.stock_app_main_service.security.identity.User;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public record GetUserDTO(
         Long id,
-        String publicId,
-        String username,
+        String subject,
+        String email,
         String nickname,
         String role,
-        List<String> permissions
+        List<GetSecurityGroupDTO> securityGroups
 ) {
     public GetUserDTO(User user){
         this(
                 user.getId(),
-                user.getPublicId().toString(),
-                user.getUsername(),
+                user.getSubject().toString(),
+                user.getEmail(),
                 user.getNickname(),
                 user.getRole().name(),
-                user.getAuthorities().stream().map(Object::toString).toList()
+                user.getSecurityGroups()
+                        .stream()
+                        .map(GetSecurityGroupDTO::new)
+                        .collect(Collectors.toList())
         );
     }
 }
