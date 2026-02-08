@@ -12,7 +12,12 @@ public record GetUserDTO(
         String email,
         String nickname,
         String role,
-        List<GetSecurityGroupDTO> securityGroups
+        List<GetSecurityGroupDTO> securityGroups,
+        String accountStatus,
+        String createdAt,
+        String updatedAt,
+        String lastLogin
+
 ) {
     public GetUserDTO(User user){
         this(
@@ -24,7 +29,11 @@ public record GetUserDTO(
                 user.getSecurityGroups()
                         .stream()
                         .map(GetSecurityGroupDTO::new)
-                        .collect(Collectors.toList())
+                        .collect(Collectors.toList()),
+                user.getAccountStatus().name(),
+                user.getCreatedAt().toString(),
+                user.getUpdatedAt().toString(),
+                user.getLastLogin().toString()
         );
     }
 }

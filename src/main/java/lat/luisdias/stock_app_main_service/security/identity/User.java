@@ -1,10 +1,10 @@
 package lat.luisdias.stock_app_main_service.security.identity;
 
 import jakarta.persistence.*;
+import lat.luisdias.stock_app_main_service.infra.exceptions.DomainInvariantViolationException;
 import lat.luisdias.stock_app_main_service.security.authorization.UserRole;
 import lat.luisdias.stock_app_main_service.security.authorization.securitygroup.SecurityGroup;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 
@@ -21,13 +21,10 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
-    private String passwordHash;
-
-    @Column(nullable = false)
-    private Instant passwordExpiryDate;
-
     @Column(nullable = false, unique = true, updatable = false)
+    private String nicknameNormalized;
+
+    @Column(nullable = false)
     private String nickname;
 
     @Enumerated(EnumType.STRING)
@@ -36,22 +33,14 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private AccountStatus accountStatus;
+    private AccountStatus accountStatus = AccountStatus.PENDING_ACTIVATION;
 
-    @Column(nullable = false)
-    private boolean twoFactorEnabled = false;
-
-    private String twoFactorSecret;
-
-    @Column(nullable = false)
+    @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
+    private Instant updatedAt;
+
     private Instant lastLogin;
-
-    @Column(nullable = false)
-    private int failedLoginAttempts = 0;
-
-    private Instant lockedUntil;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
@@ -66,74 +55,61 @@ public class User {
     public User(
             UUID subject,
             String email,
-            String passwordHash,
             String nickname,
-            UserRole role,
-            AccountStatus accountStatus
+            UserRole role
     ) {
         this.subject = Objects.requireNonNull(subject);
-        this.email = Objects.requireNonNull(email);
-        this.passwordHash = Objects.requireNonNull(passwordHash);
-        this.nickname = Objects.requireNonNull(nickname);
+        this.email = normalizeEmail(email);
+        setNickname(nickname);
         this.role = Objects.requireNonNull(role);
-        this.accountStatus = Objects.requireNonNull(accountStatus);
     }
 
     @PrePersist
     protected void onCreate() {
-        this.createdAt = Instant.now();
-        this.passwordExpiryDate = this.createdAt;
+        Instant now = Instant.now();
+        this.createdAt = now;
+        this.updatedAt = now;
     }
 
-    public void changePassword(String newPasswordHash, Duration passwordExpiryDuration) {
-        this.passwordHash = Objects.requireNonNull(newPasswordHash);
-        this.passwordExpiryDate = Instant.now().plus(passwordExpiryDuration);
+    public void active() {
+        if (this.accountStatus == AccountStatus.ACTIVE) return;
+        this.accountStatus = AccountStatus.ACTIVE;
+        setUpdated();
+    }
+
+    public void  disable() {
+        if (this.accountStatus == AccountStatus.INACTIVE) return;
+        this.accountStatus = AccountStatus.INACTIVE;
+        setUpdated();
     }
 
     public void changeEmail(String email) {
-        this.email = Objects.requireNonNull(email);
-    }
-
-    public void changeAccountStatus(AccountStatus newAccountStatus) {
-        this.accountStatus = Objects.requireNonNull(newAccountStatus);
-    }
-
-    public void enableTwoFactor(String secret) {
-        this.twoFactorSecret = Objects.requireNonNull(secret);
-        this.twoFactorEnabled = true;
-    }
-
-    public void disableTwoFactor() {
-        this.twoFactorSecret = null;
-        this.twoFactorEnabled = false;
+        String normalizedEmail = normalizeEmail(email);
+        if (this.email.equals(normalizedEmail)) return;
+        this.email = normalizedEmail;
+        setUpdated();
     }
 
     public void addSecurityGroup(SecurityGroup group) {
+        if (securityGroups.contains(group)) return;
         this.securityGroups.add(group);
+        setUpdated();
     }
 
     public void removeSecurityGroup(SecurityGroup group) {
+        if (this.securityGroups.isEmpty() || !this.securityGroups.contains(group)) return;
         this.securityGroups.remove(group);
+        setUpdated();
     }
 
     public void removeAllSecurityGroups() {
-        new HashSet<>(securityGroups)
-                .forEach(this::removeSecurityGroup);
+        if (this.securityGroups.isEmpty()) return;
+        this.securityGroups.clear();
+        setUpdated();
     }
 
-    public void setLastLogin() {
+    public void registerLogin() {
         this.lastLogin = Instant.now();
-        this.failedLoginAttempts = 0;
-        this.lockedUntil = null;
-    }
-
-    public void setFailedLoginAttempts(int maxAttempts, Duration lockDuration) {
-        this.failedLoginAttempts++;
-
-        if (failedLoginAttempts >= maxAttempts) {
-            this.lockedUntil = Instant.now().plus(lockDuration);
-            this.failedLoginAttempts = 0;
-        }
     }
 
     public Long getId() {
@@ -148,12 +124,8 @@ public class User {
         return email;
     }
 
-    public String getPasswordHash() {
-        return passwordHash;
-    }
-
-    public Instant getPasswordExpiryDate() {
-        return passwordExpiryDate;
+    public String getNicknameNormalized() {
+        return nicknameNormalized;
     }
 
     public String getNickname() {
@@ -164,32 +136,16 @@ public class User {
         return role;
     }
 
-    public boolean isActive() {
-        return accountStatus.equals(AccountStatus.ACTIVE);
-    }
-
-    public boolean isLocked() {
-        return lockedUntil != null && lockedUntil.isAfter(Instant.now());
-    }
-
-    public Instant getLockedUntil() {
-        return lockedUntil;
-    }
-
-    public boolean isTwoFactorEnabled() {
-        return twoFactorEnabled;
-    }
-
-    public String getTwoFactorSecret() {
-        return twoFactorSecret;
-    }
-
     public Set<SecurityGroup> getSecurityGroups() {
         return Collections.unmodifiableSet(securityGroups);
     }
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public Instant getUpdatedAt() {
+        return updatedAt;
     }
 
     public AccountStatus getAccountStatus() {
@@ -210,5 +166,25 @@ public class User {
     @Override
     public int hashCode() {
         return Objects.hashCode(subject);
+    }
+
+    private String normalizeEmail(String email) {
+        if (email == null || email.isBlank())
+            throw new DomainInvariantViolationException("exception.email_required");
+        if (!email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"))
+            throw new DomainInvariantViolationException("exception.email_invalid");
+        return email.trim().toLowerCase();
+    }
+
+    private void setNickname(String nickname) {
+        if (nickname == null || nickname.isBlank())
+            throw new DomainInvariantViolationException("exception.nickname_required");
+        String cleaned = nickname.replaceAll("( {2,})", " ").trim();
+        this.nickname = cleaned;
+        this.nicknameNormalized = cleaned.toLowerCase();
+    }
+
+    private void setUpdated() {
+        this.updatedAt = Instant.now();
     }
 }

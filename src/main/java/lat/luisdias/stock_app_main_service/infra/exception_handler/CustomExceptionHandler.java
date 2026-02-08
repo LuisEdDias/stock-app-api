@@ -1,9 +1,10 @@
-package lat.luisdias.stock_app_main_service.security.infra.exception_handler;
+package lat.luisdias.stock_app_main_service.infra.exception_handler;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceException;
-import lat.luisdias.stock_app_main_service.security.dto.message.ErrorMessageDTO;
-import lat.luisdias.stock_app_main_service.security.dto.message.FieldErrorMessageDTO;
+import lat.luisdias.stock_app_main_service.infra.exceptions.DomainInvariantViolationException;
+import lat.luisdias.stock_app_main_service.infra.message.ErrorMessageDTO;
+import lat.luisdias.stock_app_main_service.infra.message.FieldErrorMessageDTO;
 import lat.luisdias.stock_app_main_service.stock.infra.util.I18n;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -46,6 +47,11 @@ public class CustomExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorMessageDTO> error409() {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorMessageDTO(I18n.get("exception.delete_referenced_entity")));
+    }
+
+    @ExceptionHandler(DomainInvariantViolationException.class)
+    public ResponseEntity<ErrorMessageDTO> error409(DomainInvariantViolationException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorMessageDTO(I18n.get(e.getMessageKey())));
     }
 
     @ExceptionHandler(RuntimeException.class)
