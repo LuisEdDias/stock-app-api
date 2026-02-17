@@ -2,8 +2,8 @@ package lat.luisdias.stockapp.shared.domain.support;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
-import lat.luisdias.stock_app_main_service.infra.exceptions.DomainInvariantViolationException;
-import lat.luisdias.stock_app_main_service.infra.exceptions.ResourceLockedException;
+import lat.luisdias.stockapp.shared.exception.exceptions.DomainInvariantViolationException;
+import lat.luisdias.stockapp.shared.exception.exceptions.ResourceLockedException;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -39,7 +39,7 @@ public abstract class RateLimitLockableEntity extends BaseEntity {
             throw new ResourceLockedException("exception.resource_locked", lockedUntil);
         }
 
-        resetAttempts();
+        this.lockedUntil = null;
     }
 
     /**
