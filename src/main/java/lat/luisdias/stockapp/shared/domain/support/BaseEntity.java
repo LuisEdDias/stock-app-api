@@ -36,7 +36,6 @@ public abstract class BaseEntity {
      * Automatically incremented by the persistence provider on every update.
      */
     @Version
-    @Column(nullable = false)
     private Long version;
 
     @CreatedDate
