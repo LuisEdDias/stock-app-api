@@ -1,7 +1,8 @@
-package lat.luisdias.stock_app_main_service.security.identity;
+package lat.luisdias.stockapp.modules.identity.domain.model;
 
 import jakarta.persistence.*;
-import lat.luisdias.stock_app_main_service.infra.exceptions.DomainInvariantViolationException;
+import lat.luisdias.stock_app_main_service.security.identity.AccountStatus;
+import lat.luisdias.stockapp.shared.exception.exceptions.DomainInvariantViolationException;
 import lat.luisdias.stock_app_main_service.security.authorization.UserRole;
 import lat.luisdias.stock_app_main_service.security.authorization.securitygroup.SecurityGroup;
 
