@@ -18,18 +18,29 @@ import java.util.UUID;
  * and a business purpose.</p>
  * <p>The lifecycle of this entity is governed by a strict expiration policy.
  * Once a token is consumed or expires, it should be considered invalid and
- * purged from the system.</p>
+ * purged from the system.<b>The underlying table is explicitly indexed to support
+ * high-performance bulk cleanup operations and rapid scoping queries for rate-limiting.</b></p>
+ *
  * @see BaseEntity
  * @see VerificationTokenPurpose
  */
 @Entity
-@Table(name = "verification_tokens")
+@Table(
+        name = "verification_tokens",
+        indexes = {
+                // For cleanup job
+                @Index(name = "idx_token_expiry", columnList = "expiry_date"),
+
+                // For scoped transactions
+                @Index(name = "idx_token_scope", columnList = "user_id, owner_id, purpose")
+        }
+)
 public class VerificationToken extends BaseEntity {
 
-    @Column(nullable = false, updatable = false)
+    @Column(name = "owner_id", nullable = false, updatable = false)
     private UUID ownerId;
 
-    @Column(nullable = false, updatable = false)
+    @Column(name = "purpose", nullable = false, updatable = false)
     @Enumerated(EnumType.STRING)
     private VerificationTokenPurpose purpose;
 
@@ -40,10 +51,11 @@ public class VerificationToken extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false, updatable = false)
     private User user;
 
-    @Column(nullable = false, updatable = false)
+    @Column(name = "expiry_date", nullable = false, updatable = false)
     private Instant expiryDate;
 
-    protected VerificationToken() {}
+    protected VerificationToken() {
+    }
 
     public VerificationToken(
             UUID ownerId,
@@ -67,6 +79,7 @@ public class VerificationToken extends BaseEntity {
     /**
      * Asserts that the token is still valid solely based on time.
      * Note: Does not verify the hash match.
+     *
      * @param now The current timestamp.
      * @throws ExpiredTokenException if the token has expired.
      * @throws NullPointerException  if the provided timestamp is null.
